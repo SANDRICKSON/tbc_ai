@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>რეგისტრაცია</title>
+</head>
+<body>
+    <h1>რეგისტრაცია</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">რეგისტრაცია</button>
+    </form>
+    <p>მხოლოდ რეგისტრირებული მომხმარებლები? <a href="{% url 'login' %}">ლოგინი</a></p>
+</body>
+</html>
