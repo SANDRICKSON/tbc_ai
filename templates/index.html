@@ -11,41 +11,132 @@
             transition: all 0.3s;
             margin: 5px;
         }
+
         .mood-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        .mood-happy { background-color: #FFD700; color: #000; }
-        .mood-sad { background-color: #4682B4; color: #fff; }
-        .mood-energetic { background-color: #FF4500; color: #fff; }
-        .mood-romantic { background-color: #FF69B4; color: #fff; }
-        .mood-chill { background-color: #32CD32; color: #fff; }
+
+        .mood-happy {
+            background-color: #FFD700;
+            color: #000;
+        }
+
+        .mood-sad {
+            background-color: #4682B4;
+            color: #fff;
+        }
+
+        .mood-energetic {
+            background-color: #FF4500;
+            color: #fff;
+        }
+
+        .mood-romantic {
+            background-color: #FF69B4;
+            color: #fff;
+        }
+
+        .mood-chill {
+            background-color: #32CD32;
+            color: #fff;
+        }
+
         .song-card {
             transition: all 0.3s;
             border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .song-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
+
         .similarity-bar {
             height: 5px;
             border-radius: 3px;
             margin-top: 5px;
         }
+
         .feature-badge {
             font-size: 0.8em;
             margin-right: 5px;
         }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .user-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .nav-spacer {
+            height: 70px;
+        }
     </style>
 </head>
 <body>
-<div class="container mt-4">
+<!-- ლოგაუთის ღილაკი -->
+{% if user.is_authenticated %}
+<div class="logout-btn">
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-sign-out-alt"></i> გამოსვლა
+        </button>
+    </form>
+</div>
+{% else %}
+<div class="logout-btn">
+    <a href="{% url 'login' %}" class="btn btn-primary">
+        <i class="fas fa-sign-in-alt"></i> შესვლა
+    </a>
+</div>
+{% endif %}
+
+<div class="nav-spacer"></div>
+
+<div class="container mt-3">
     <div class="row">
         <div class="col-md-12">
             <h1 class="text-center mb-4">🎵 განწყობის მიხედვით მუსიკის რეკომენდერი</h1>
 
+            <!-- მარტივი ნავიგაცია -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    {% if user.is_authenticated %}
+                    <span class="badge bg-success p-2">
+                        <i class="fas fa-user"></i> {{ user.username }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if user.is_authenticated %}
+                    <form method="POST" action="{% url 'logout' %}" class="d-inline">
+                        {% csrf_token %}
+
+                    </form>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-sign-in-alt"></i> შესვლა
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- როგორ მუშაობს? -->
             <div class="card mb-4">
                 <div class="card-body">
                     <h5 class="card-title">როგორ მუშაობს?</h5>
@@ -55,13 +146,22 @@
                         3. მოისმინეთ YouTube-ზე ან Spotify-ზე<br>
                         4. შეაფასეთ სიმღერები უკეთესი რეკომენდაციებისთვის
                     </p>
+                    {% if not user.is_authenticated %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-info-circle"></i> უკეთესი რეკომენდაციებისთვის გთხოვთ
+                        <a href="{% url 'login' %}" class="alert-link">გაიაროთ ავტორიზაცია</a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- განწყობის არჩევა -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>აირჩიეთ თქვენი განწყობა</h5>
+                    <h5>
+                        <i class="fas fa-smile"></i> აირჩიეთ თქვენი განწყობა
+
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div id="mood-selection" class="d-flex flex-wrap justify-content-center">
@@ -82,8 +182,12 @@
             <!-- რეკომენდაციები -->
             <div class="card">
                 <div class="card-header">
-                    <h5>რეკომენდაციები</h5>
-                    <small id="current-mood-text" class="text-muted"></small>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-music"></i> რეკომენდაციები
+                        </h5>
+                        <small id="current-mood-text" class="text-muted"></small>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div id="loading" class="text-center" style="display: none;">
@@ -94,45 +198,73 @@
                     </div>
                     <div id="recommendations" class="row">
                         <!-- რეკომენდაციები აქ ჩაიტვირთება -->
+                        <div class="col-12 text-center text-muted">
+                            <i class="fas fa-music fa-2x mb-3"></i>
+                            <p>აირჩიეთ განწყობა რეკომენდაციების მისაღებად</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- სტატისტიკა -->
             {% if user.is_authenticated %}
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5>თქვენი სტატისტიკა</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card text-center">
-                                <div class="card-body">
-                                    <h5 id="songs-listened">0</h5>
-                                    <p class="text-muted">მოსმენილი სიმღერა</p>
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> თქვენი სტატისტიკა</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 id="songs-listened">0</h3>
+                                        <p class="text-muted">
+                                            <i class="fas fa-headphones"></i> მოსმენილი სიმღერა
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 id="average-rating">0</h3>
+                                        <p class="text-muted">
+                                            <i class="fas fa-star"></i> საშუალო შეფასება
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h3 id="favorite-mood">-</h3>
+                                        <p class="text-muted">
+                                            <i class="fas fa-heart"></i> საყვარელი განწყობა
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card text-center">
-                                <div class="card-body">
-                                    <h5 id="average-rating">0</h5>
-                                    <p class="text-muted">საშუალო შეფასება</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card text-center">
-                                <div class="card-body">
-                                    <h5 id="favorite-mood">-</h5>
-                                    <p class="text-muted">საყვარელი განწყობა</p>
-                                </div>
-                            </div>
+
+                        <!-- ლოგაუთის ღილაკი -->
+                        <div class="mt-4 text-center">
+
                         </div>
                     </div>
                 </div>
-            </div>
+            {% else %}
+                <!-- მოწვევა რეგისტრაციისთვის -->
+                <div class="card mt-4">
+                    <div class="card-body text-center">
+                        <h5><i class="fas fa-user-plus"></i> გსურთ უკეთესი რეკომენდაციები?</h5>
+                        <p class="text-muted">დალოგინდით და მიიღეთ პერსონალიზირებული რეკომენდაციები</p>
+                        <div class="mt-3">
+                            <a href="{% url 'login' %}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> შესვლა
+                            </a>
+                        </div>
+                    </div>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -140,77 +272,84 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-let currentMood = '';
-let currentUserId = {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %};
+    let currentMood = '';
+    let currentUserId = {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %};
 
-document.querySelectorAll('.mood-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        currentMood = this.dataset.mood;
-        document.getElementById('current-mood-text').textContent =
-            `ამჟამინდელი განწყობა: ${this.textContent}`;
-
-        document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-
-        getRecommendations();
+    // დასაწყისში სტატისტიკის ჩატვირთვა (თუ დალოგინებულია)
+    {% if user.is_authenticated %}
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserStats();
     });
-});
+    {% endif %}
 
-async function getRecommendations() {
-    if (!currentMood) return;
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            currentMood = this.dataset.mood;
+            document.getElementById('current-mood-text').textContent =
+                `ამჟამინდელი განწყობა: ${this.textContent}`;
 
-    const loading = document.getElementById('loading');
-    const recommendationsDiv = document.getElementById('recommendations');
+            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
 
-    loading.style.display = 'block';
-    recommendationsDiv.innerHTML = '';
-
-    try {
-        const response = await fetch('/api/recommend/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({
-                mood: currentMood,
-                user_id: currentUserId,
-                limit: 10
-            })
+            getRecommendations();
         });
+    });
 
-        const data = await response.json();
+    async function getRecommendations() {
+        if (!currentMood) return;
 
-        if (data.success) {
-            displayRecommendations(data.recommendations);
-        } else {
-            recommendationsDiv.innerHTML = `<div class="col-12"><div class="alert alert-danger">${data.error || 'შეცდომა'}</div></div>`;
+        const loading = document.getElementById('loading');
+        const recommendationsDiv = document.getElementById('recommendations');
+
+        loading.style.display = 'block';
+        recommendationsDiv.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/recommend/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    mood: currentMood,
+                    user_id: currentUserId,
+                    limit: 10
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                displayRecommendations(data.recommendations);
+            } else {
+                recommendationsDiv.innerHTML = `<div class="col-12"><div class="alert alert-danger">${data.error || 'შეცდომა'}</div></div>`;
+            }
+        } catch (error) {
+            recommendationsDiv.innerHTML = `<div class="col-12"><div class="alert alert-danger">შეცდომა: ${error.message}</div></div>`;
+        } finally {
+            loading.style.display = 'none';
         }
-    } catch (error) {
-        recommendationsDiv.innerHTML = `<div class="col-12"><div class="alert alert-danger">შეცდომა: ${error.message}</div></div>`;
-    } finally {
-        loading.style.display = 'none';
-    }
-}
-
-function displayRecommendations(recommendations) {
-    const container = document.getElementById('recommendations');
-    if (recommendations.length === 0) {
-        container.innerHTML = `<div class="col-12"><div class="alert alert-info">ამ განწყობისთვის რეკომენდაციები ვერ მოიძებნა.</div></div>`;
-        return;
     }
 
-    container.innerHTML = '';
-    recommendations.forEach(song => {
-        const similarityPercent = Math.round(song.similarity * 100);
-        const energyPercent = Math.round(song.features.energy * 100);
-        const valencePercent = Math.round(song.features.valence * 100);
+    function displayRecommendations(recommendations) {
+        const container = document.getElementById('recommendations');
+        if (recommendations.length === 0) {
+            container.innerHTML = `<div class="col-12"><div class="alert alert-info">ამ განწყობისთვის რეკომენდაციები ვერ მოიძებნა.</div></div>`;
+            return;
+        }
 
-        const card = document.createElement('div');
-        card.className = 'col-md-6 col-lg-4 mb-4';
-        card.innerHTML = `
+        container.innerHTML = '';
+        recommendations.forEach(song => {
+            const similarityPercent = Math.round(song.similarity * 100);
+            const energyPercent = Math.round(song.features.energy * 100);
+            const valencePercent = Math.round(song.features.valence * 100);
+
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-lg-4 mb-4';
+            card.innerHTML = `
             <div class="card song-card h-100">
-                <img src="${song.cover_url || '/static/default_cover.png'}" class="card-img-top" alt="${song.title}" style="height:180px; object-fit:cover;">
+                <img src="${song.cover_url || '/static/default.jpg'}" class="card-img-top" alt="${song.title}" style="height:180px; object-fit:cover;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
@@ -250,46 +389,99 @@ function displayRecommendations(recommendations) {
                     <div class="d-flex justify-content-between">
                         ${song.youtube_link ? `<a href="${song.youtube_link}" target="_blank" class="btn btn-danger btn-sm"><i class="fab fa-youtube"></i> YouTube</a>` : ''}
                         ${song.spotify_link ? `<a href="${song.spotify_link}" target="_blank" class="btn btn-success btn-sm"><i class="fab fa-spotify"></i> Spotify</a>` : ''}
-                        <button class="btn btn-outline-primary btn-sm rate-btn" data-song-id="${song.id}">შეფასება</button>
+                        <button class="btn btn-outline-primary btn-sm rate-btn" data-song-id="${song.id}">
+                            <i class="fas fa-star"></i> შეფასება
+                        </button>
                     </div>
                 </div>
             </div>
         `;
-        container.appendChild(card);
-    });
-
-    document.querySelectorAll('.rate-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            rateSong(this.dataset.songId);
+            container.appendChild(card);
         });
-    });
-}
 
-async function rateSong(songId) {
-    if (!currentUserId) { alert('გთხოვთ, გაიაროთ ავტორიზაცია'); return; }
-    const rating = prompt('შეიყვანეთ შეფასება 1-დან 5-მდე:', '5');
-    if (!rating || rating < 1 || rating > 5) return;
-
-    try {
-        const response = await fetch('/api/rate/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ song_id: songId, rating: parseInt(rating), mood: currentMood })
-        });
-        const data = await response.json();
-        if (data.success) alert('შეფასება შენახულია!');
-    } catch { alert('შეცდომა შეფასების შენახვისას'); }
-}
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        document.cookie.split(';').forEach(cookie => {
-            if (cookie.trim().startsWith(name + '=')) cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
+        document.querySelectorAll('.rate-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                rateSong(this.dataset.songId);
+            });
         });
     }
-    return cookieValue;
-}
+
+    async function rateSong(songId) {
+        if (!currentUserId) {
+            alert('გთხოვთ, გაიაროთ ავტორიზაცია უკეთესი რეკომენდაციებისთვის');
+            window.location.href = "{% url 'login' %}";
+            return;
+        }
+        const rating = prompt('შეიყვანეთ შეფასება 1-დან 5-მდე:', '5');
+        if (!rating || rating < 1 || rating > 5) return;
+
+        try {
+            const response = await fetch('/api/rate/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                body: JSON.stringify({song_id: songId, rating: parseInt(rating), mood: currentMood})
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('შეფასება შენახულია!');
+                // განაახლე სტატისტიკა
+                loadUserStats();
+            }
+        } catch {
+            alert('შეცდომა შეფასების შენახვისას');
+        }
+    }
+
+    async function loadUserStats() {
+        if (!currentUserId) return;
+
+        try {
+            const response = await fetch(`/api/user-stats/?user_id=${currentUserId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('songs-listened').textContent = data.stats.songs_listened;
+                document.getElementById('average-rating').textContent = data.stats.average_rating;
+                document.getElementById('favorite-mood').textContent = data.stats.favorite_mood;
+            }
+        } catch (error) {
+            console.error('Error loading user stats:', error);
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(cookie => {
+                if (cookie.trim().startsWith(name + '=')) cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
+            });
+        }
+        return cookieValue;
+    }
 </script>
+
+<footer class="footer mt-5 py-4 bg-light border-top">
+    <div class="container">
+        <div class="row align-items-center justify-content-center">
+            <div class="col-12 text-center mb-3">
+                <!-- თიბისის ლოგო -->
+                <a href="https://www.tbcacademy.ge" target="_blank" class="text-decoration-none d-inline-block">
+                    <img src="/static/tbc.png"
+                         alt="TBC Academy Logo"
+                         height="60"
+                         style="max-height: 60px; object-fit: contain; margin-bottom: 10px;">
+                </a>
+                <div class="mt-2">
+                    <p class="mb-1 text-muted">
+                        &copy; 2024 განწყობის მიხედვით მუსიკის რეკომენდერი
+                    </p>
+                    <small class="text-muted">
+                        ეს პროექტი შექმნილია TBC Academy-ს სტუდენტის მიერ
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
 </body>
 </html>

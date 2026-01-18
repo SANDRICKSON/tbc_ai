@@ -41,91 +41,164 @@
             border-radius: 15px;
             box-shadow: 0 15px 40px rgba(0,0,0,0.2);
             text-align: center;
-            transform: translateY(-50px);
-            opacity: 0;
-            animation: fadeInUp 1s forwards;
+            animation: slideIn 0.6s ease-out;
         }
 
-        @keyframes fadeInUp {
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
             to {
-                transform: translateY(0);
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Logo */
-        .login-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-            animation: rotateLogo 3s linear infinite;
-        }
-
-        @keyframes rotateLogo {
-            0% { transform: rotate(0deg);}
-            100% { transform: rotate(360deg);}
-        }
-
         h1 {
+            color: #333;
+            margin-bottom: 30px;
             font-weight: 700;
-            margin-bottom: 25px;
-            color: #343a40;
         }
 
-        /* Form fields */
+        /* Form styling */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
         .form-control {
-            border-radius: 10px;
+            width: 100%;
             padding: 12px;
-            transition: 0.3s;
-        }
-        .form-control:focus {
-            border-color: #6f42c1;
-            box-shadow: 0 0 10px rgba(111, 66, 193, 0.3);
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
         }
 
-        /* Submit button */
+        .form-control:focus {
+            outline: none;
+            border-color: #a18cd1;
+            box-shadow: 0 0 0 3px rgba(161, 140, 209, 0.1);
+        }
+
+        /* Login button styling */
         .btn-login {
             width: 100%;
             padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(111, 66, 193, 0.4);
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
         }
 
-        /* Register link */
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(161, 140, 209, 0.4);
+            color: white;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        /* Link to register */
         .register-link {
-            margin-top: 15px;
-            font-size: 0.9rem;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
         }
+
         .register-link a {
+            color: #a18cd1;
             text-decoration: none;
-            color: #6f42c1;
-            font-weight: 500;
-            transition: 0.3s;
+            font-weight: 600;
+            transition: text-decoration 0.3s;
         }
+
         .register-link a:hover {
-            color: #343a40;
+            text-decoration: underline;
+        }
+
+        /* Error messages */
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        ul.errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 5px 0;
+        }
+
+        ul.errorlist li {
+            color: #dc3545;
+            font-size: 13px;
+            margin: 3px 0;
         }
     </style>
 </head>
 <body>
 
     <div class="login-container">
-        <!-- Logo -->
-        <img src="{% static 'tbc.png' %}" alt="TBC ლოგო" class="login-logo">
-
-        <h1>🎵 შესვლა</h1>
-
-        <form method="post">
+        <h1>🎵 ლოგინი</h1>
+        
+        {% if form.non_field_errors or errors %}
+            <div class="error-message">
+                <strong>შეცდომა!</strong> 
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+                {% if errors %}
+                    გთხოვთ შეამოწმოთ თქვენი მომხმარებელი და პაროლი.
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <form method="post" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary btn-login mt-2">შესვლა</button>
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.username.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.password.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-login">შემოიხვიდით</button>
         </form>
-
         <div class="register-link">
             <p>ახალი მომხმარებელი? <a href="{% url 'register' %}">რეგისტრაცია</a></p>
         </div>

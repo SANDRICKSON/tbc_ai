@@ -139,3 +139,10 @@ AI_MODELS_DIR = os.path.join(BASE_DIR, 'ai_models')
 # ავტომატურად ქმნის ფოლდერს, თუ არ არსებობს
 if not os.path.exists(AI_MODELS_DIR):
     os.makedirs(AI_MODELS_DIR)
+
+# ---------------------------
+# Authentication Settings
+# ---------------------------
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
