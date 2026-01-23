@@ -401,6 +401,52 @@ def recommendations_view(request):
 
 
 @login_required
+def user_stats(request):
+    """
+    მომხმარებლის სტატისტიკა:
+    - მოსმენილი სიმღერები
+    - საშუალო შეფასება
+    - საყვარელი განწყობა
+    """
+
+    # რამდენი სიმღერა მოისმინა (PlayHistory-ზე დაყრდნობით)
+    songs_listened = PlayHistory.objects.filter(
+        user=request.user
+    ).values('song').distinct().count()
+
+    # საშუალო შეფასება
+    avg_rating = UserRating.objects.filter(
+        user=request.user
+    ).aggregate(avg=models.Avg('rating'))['avg']
+
+    avg_rating = round(avg_rating, 1) if avg_rating else 0
+
+    # საყვარელი განწყობა
+    favorite_mood_qs = (
+        UserRating.objects
+        .filter(user=request.user)
+        .values('mood_when_listened')
+        .annotate(count=models.Count('mood_when_listened'))
+        .order_by('-count')
+        .first()
+    )
+
+    favorite_mood = (
+        favorite_mood_qs['mood_when_listened']
+        if favorite_mood_qs else '-'
+    )
+
+    return JsonResponse({
+        'success': True,
+        'stats': {
+            'songs_listened': songs_listened,
+            'average_rating': avg_rating,
+            'favorite_mood': favorite_mood
+        }
+    })
+
+
+@login_required
 def model_info_view(request):
     """AI მოდელის ინფორმაცია"""
     info = {
