@@ -121,7 +121,67 @@ class MoodRecommender:
                     'danceability': float(song.get('danceability', 0.5))
                 })
 
+        def train_or_update(self, songs):
+        """ტრენინგი ან განახლება"""
+        try:
+            # ცდილობთ არსებული მოდელის ჩატვირთვას
+            model_path = os.path.join(settings.BASE_DIR, 'mood_recommender.pkl')
+            
+            if os.path.exists(model_path):
+                # ვცდილობთ ჩატვირთვას
+                if self.load_model(model_path):
+                    print(f"📥 მოდელი ჩატვირთულია: {model_path}")
+                    
+                    # თუ ახალი სიმღერებია, განვაახლოთ
+                    current_song_ids = {song.id for song in songs}
+                    old_song_ids = set(self.songs_df['id'].tolist()) if 'id' in self.songs_df.columns else set()
+                    
+                    if current_song_ids != old_song_ids:
+                        print(f"🆕 ახალი სიმღერები დაემატა. ძველი: {len(old_song_ids)}, ახალი: {len(current_song_ids)}")
+                        return self.train(songs)
+                    else:
+                        print("✅ მოდელი უკვე განახლებულია")
+                        return True
+                else:
+                    # ჩატვირთვა ვერ მოხერხდა, ვტრენინგდებით
+                    return self.train(songs)
+            else:
+                # ფაილი არ არსებობს, ვტრენინგდებით
+                return self.train(songs)
+                
+        except Exception as e:
+            print(f"❌ train_or_update შეცდომა: {e}")
+            return self.train(songs)  # fallback to full training
+    
+    def load_model(self, filepath):
+        """მოდელის ჩატვირთვა გაუმჯობესებული ვერსია"""
+        try:
+            if os.path.exists(filepath):
+                # შევამოწმოთ ფაილის ზომა
+                if os.path.getsize(filepath) == 0:
+                    print(f"⚠️ მოდელის ფაილი ცარიელია: {filepath}")
+                    return False
+                    
+                model_data = joblib.load(filepath)
+                self.model = model_data.get('model')
+                self.label_encoders = model_data.get('label_encoders', {})
+                
+                if self.model is None:
+                    print(f"⚠️ მოდელის ობიექტი ცარიელია: {filepath}")
+                    return False
+                    
+                print(f"✅ მოდელი წარმატებით ჩატვირთულია: {filepath}")
+                return True
+            else:
+                print(f"📭 მოდელის ფაილი არ არსებობს: {filepath}")
+                return False
+        except Exception as e:
+            print(f"❌ მოდელის ჩატვირთვის შეცდომა: {e}")
+            return False
+
         return recommendations[:limit]
+
+
 
 
 # გლობალური რეკომენდერი
