@@ -212,37 +212,36 @@ def get_recommendations(request):
     return JsonResponse({'error': 'არასწორი მეთოდი'}, status=405)
 
 
+@csrf_exempt
 @login_required
 def rate_song(request):
-    """სიმღერის შეფასება"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            song_id = data.get('song_id')
-            rating = data.get('rating')
-            mood = data.get('mood')
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST request required"})
 
-            song = get_object_or_404(Song, id=song_id)
+    try:
+        data = json.loads(request.body)
+        song_id = data.get("song_id")
+        rating = data.get("rating")
+        mood = data.get("mood")
 
-            user_rating, created = UserRating.objects.update_or_create(
-                user=request.user,
-                song=song,
-                defaults={'rating': rating, 'mood_when_listened': mood}
-            )
+        if not all([song_id, rating, mood]):
+            return JsonResponse({"success": False, "error": "ყველა მონაცემი სავალდებულოა"})
 
-            # მოდელის განახლება
-            recommender.train_from_database()
+        song = Song.objects.get(id=song_id)
 
-            return JsonResponse({
-                'success': True,
-                'message': 'შეფასება შენახულია',
-                'rating_id': user_rating.id
-            })
+        # Update or create
+        UserRating.objects.update_or_create(
+            user=request.user,
+            song=song,
+            defaults={'rating': rating, 'mood_when_listened': mood}
+        )
 
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"success": True})
+    except Song.DoesNotExist:
+        return JsonResponse({"success": False, "error": "სიმღერა არ მოიძებნა"})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
 
-    return JsonResponse({'error': 'არასწორი მეთოდი'}, status=405)
 
 
 @login_required
